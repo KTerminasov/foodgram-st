@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 
 class Ingredient(models.Model):
@@ -30,7 +30,7 @@ class Recipe(models.Model):
     """Рецепт."""
 
     author = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='recipes'
     )
@@ -91,7 +91,7 @@ class Favorite(models.Model):
     """Избранное."""
 
     user = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='favorites'
     )
@@ -115,12 +115,11 @@ class Favorite(models.Model):
         return f'{self.recipe} в избранном у {self.user}'
 
 
-
 class ShoppingCart(models.Model):
     """Список покупок."""
 
     user = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='shopping_cart'
     )
@@ -142,4 +141,3 @@ class ShoppingCart(models.Model):
 
     def __str__(self):
         return f'{self.recipe} в списке покупок у {self.user}'
-
