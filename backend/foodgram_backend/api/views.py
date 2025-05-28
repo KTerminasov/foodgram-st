@@ -1,4 +1,5 @@
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.shortcuts import render
 from djoser.views import UserViewSet
 from rest_framework import status, viewsets
@@ -9,10 +10,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import Subscription
+from recipes.models import (
+    Ingredient,
+    Recipe
+)
+
 from .pagination import CustomPagination
+from .permissions import IsOwnerOrReadOnly
 from .serializers import (
     AvatarSerializer,
+    CreateUpdateRecipeSerializer,
     SetPasswordSerializer,
+    IngredientSerializer,
+    ReadDeleteRecipeSerializer,
     UserSerializer
 )
 
@@ -72,7 +82,33 @@ class CustomUserViewSet(UserViewSet):
                     {'current_password': 'Неверный пароль'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            request.user.set_password(serializer.validated_data['new_password'])
+            request.user.set_password(
+                serializer.validated_data['new_password'])
             request.user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = ReadDeleteRecipeSerializer
+    pagination_class = CustomPagination
+    permission_classes = (IsOwnerOrReadOnly, )
+
+    def get_serializer_class(self):
+        if self.action in ('create', 'update', 'partial_update'):
+            return CreateUpdateRecipeSerializer
+        return ReadDeleteRecipeSerializer
+
+    @action(detail=True, methods=('GET',), url_path='get-link',)
+    def get_link(self, request, **kwargs):
+        link = (
+            f'{settings.ALLOWED_HOSTS[0]}/s/'
+            f'{self.get_object().create_short_link()}'
+        )
+        return Response({'short-link': link}, status=status.HTTP_200_OK)

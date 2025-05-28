@@ -1,3 +1,4 @@
+import hashlib
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -46,6 +47,12 @@ class Recipe(models.Model):
         related_name='recipes'
     )
     pub_date = models.DateTimeField(auto_now_add=True)
+    short_link = short_link = models.CharField(
+        max_length=10,
+        unique=True,
+        blank=True,
+        null=True
+    )
 
     class Meta:
         ordering = ['-pub_date']
@@ -54,6 +61,16 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+    def create_short_link(self):
+        """Создание короткой ссылки с помощью хеширования id и name."""
+        base_str = f"{self.id}{self.name}"
+        hash_object = hashlib.md5(base_str.encode())
+        hex_dig = hash_object.hexdigest()
+
+        self.short_link = hex_dig[:8]
+        self.save()
+        return self.short_link
 
 
 class RecipeIngredient(models.Model):

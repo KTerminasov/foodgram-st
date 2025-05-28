@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-!+-x@#8h_pf9o1e9n@fae6f^3#z0ptc=i*e%r=@2kh6up+50wm
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -144,7 +144,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 
-    'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPagination',
+    # 'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPagination',
 }
 
 DJOSER = {
