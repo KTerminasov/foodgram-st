@@ -206,6 +206,60 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        return ReadRecipeSerializer(
+        return ReadDeleteRecipeSerializer(
             context=self.context
         ).to_representation(instance=instance)
+
+
+class MinifiedRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки запросов к избранным и списку покупок."""
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time',
+        )
+
+
+class SubscriptionSerializer(UserSerializer):
+    email = serializers.EmailField(source='following.email')
+    id = serializers.IntegerField(source='following.id')
+    username = serializers.CharField(source='following.username')
+    first_name = serializers.CharField(source='following.first_name')
+    last_name = serializers.CharField(source='following.last_name')
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    avatar = serializers.ImageField(source='following.avatar', required=False)
+
+    class Meta:        
+        model = Subscription
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+            'avatar'
+        )
+
+    def get_is_subscribed(self, obj):
+        """Возрвращает True, так как мы уже в подписках."""
+        return True
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        recipes_limit = request.query_params.get('recipes_limit')
+        queryset = obj.following.recipes.all()
+        if recipes_limit and recipes_limit.isdigit():
+            queryset = queryset[:int(recipes_limit)]
+        return MinifiedRecipeSerializer(queryset, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.following.recipes.count()
