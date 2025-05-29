@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.db.models import Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.urls import reverse
 from djoser.views import UserViewSet
 from rest_framework import status, viewsets, filters
 from rest_framework.authtoken.models import Token
@@ -147,8 +148,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_link(self, request, **kwargs):
         """Получение короткой ссылки на рецепт."""
         link = (
-            f'{settings.ALLOWED_HOSTS[0]}/s/'
-            f'{self.get_object().create_short_link()}'
+            f'{settings.ALLOWED_HOSTS[0]}/short/'
+            f'{self.get_object().create_short_link()}/'
         )
 
         return Response({'short-link': link}, status=status.HTTP_200_OK)
@@ -251,6 +252,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         favorite.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def get_recipe_by_short_link(request, short_link):
+    """Получение рецепта при помощи постоянной короткой ссылки."""
+    recipe = get_object_or_404(Recipe, short_link=short_link)
+    url = request.build_absolute_uri(f'/recipes/{recipe.id}')
+
+    return HttpResponseRedirect(url)
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
