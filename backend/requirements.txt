@@ -5,6 +5,7 @@ charset-normalizer==3.4.2
 cryptography==45.0.3
 defusedxml==0.7.1
 Django==4.2.21
+django-filter==25.1
 django-stubs==5.2.0
 django-stubs-ext==5.2.0
 djangorestframework==3.16.0

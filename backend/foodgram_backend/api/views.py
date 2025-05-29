@@ -3,13 +3,13 @@ from django.conf import settings
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, filters
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from recipes.models import (
     Favorite,
@@ -20,6 +20,7 @@ from recipes.models import (
 )
 from users.models import Subscription
 
+from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsOwnerOrReadOnly
 from .serializers import (
@@ -118,6 +119,9 @@ class CustomUserViewSet(UserViewSet):
 class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = (AllowAny,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -125,6 +129,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = ReadRecipeSerializer
     pagination_class = CustomPagination
     permission_classes = (IsOwnerOrReadOnly, )
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         """Назначение сериализатора в зависимости от действия."""
@@ -211,7 +217,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = (
             'attachment; filename="shopping_list.txt"'
         )
-        
+
         return response
 
     @action(
@@ -223,7 +229,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Добавление/удаление рецепта в избранное."""
         recipe = self.get_object()
         if request.method == 'POST':
-            
+
             if Favorite.objects.filter(
                 user=request.user, recipe=recipe
             ).exists():

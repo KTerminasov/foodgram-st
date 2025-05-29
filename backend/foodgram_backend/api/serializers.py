@@ -170,13 +170,29 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Необходимо указать ингредиенты')
 
         ingredients = []
+        ingredient_ids = set()
+
         for item in value:
             try:
+                if 'id' not in item or 'amount' not in item:
+                    raise serializers.ValidationError(
+                        'Неверный формат ингредиента. '
+                        'Требуются поля: id, amount'
+                    )
+
+                if item['id'] in ingredient_ids:
+                    raise serializers.ValidationError(
+                        f'Ингредиент с id {item["id"]} '
+                        'указан более одного раза'
+                    )
+                ingredient_ids.add(item['id'])
+
                 ingredient = Ingredient.objects.get(id=item['id'])
                 if int(item['amount']) < 1:
                     raise serializers.ValidationError(
                         'Количество должно быть больше 0.'
                     )
+                
                 ingredients.append({
                     'ingredient': ingredient,
                     'amount': item['amount']
@@ -212,6 +228,16 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Изменение рецепта и его ингридиентов."""
+
+        if 'ingredients' not in validated_data:
+            raise serializers.ValidationError(
+                {'ingredients': 'Необходимо указать ингредиенты'}
+            )
+
+        if not validated_data['ingredients']:
+            raise serializers.ValidationError(
+                {'ingredients': 'Список ингредиентов не может быть пустым'}
+            )
 
         ingredients = validated_data.pop('ingredients')
         instance = super().update(instance, validated_data)

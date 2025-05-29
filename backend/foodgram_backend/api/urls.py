@@ -10,7 +10,7 @@ from .views import (
 
 router_v1 = DefaultRouter()
 router_v1.register('users', CustomUserViewSet, basename='users')
-router_v1.register('ingridients', IngridientViewSet, basename='ingridients')
+router_v1.register('ingredients', IngridientViewSet, basename='ingridients')
 router_v1.register('recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
