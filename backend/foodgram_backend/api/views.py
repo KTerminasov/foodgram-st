@@ -162,11 +162,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
 
         if request.method == 'POST':
-
-            if ShoppingCart.objects.filter(
-                user=request.user,
-                recipe=recipe
-            ).exists():
+            if request.user.shopping_cart.filter(recipe=recipe).exists():
                 return Response(
                     {'errors': 'Рецепт уже в списке покупок'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -177,9 +173,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        shopping_cart = ShoppingCart.objects.filter(
-            user=request.user, recipe=recipe
-        )
+        shopping_cart = request.user.shopping_cart.filter(recipe=recipe)
+
         if not shopping_cart.exists():
             return Response(
                 {'errors': 'Рецепта нет в списке покупок'},
@@ -229,9 +224,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         if request.method == 'POST':
 
-            if Favorite.objects.filter(
-                user=request.user, recipe=recipe
-            ).exists():
+            if request.user.favorites.filter(recipe=recipe).exists():
                 return Response(
                     {'errors': 'Рецепт уже в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -241,7 +234,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer = MinifiedRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        favorite = Favorite.objects.filter(user=request.user, recipe=recipe)
+        favorite = request.user.favorites.filter(recipe=recipe)
         if not favorite.exists():
             return Response(
                 {'errors': 'Рецепта нет в избранном'},
@@ -266,7 +259,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return Subscription.objects.filter(user=self.request.user)
+        return self.request.user.followers.all()
 
     def create(self, request, *args, **kwargs):
         """Подписка пользователя на другого."""
@@ -278,9 +271,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if Subscription.objects.filter(
-            user=request.user, following=following
-        ).exists():
+        if request.user.followers.filter(following=following).exists():
             return Response(
                 {'errors': 'Вы уже подписаны на этого пользователя'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -296,9 +287,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """Отписка пользователя от другого."""
         following = get_object_or_404(User, id=kwargs.get('id'))
-        subscription = Subscription.objects.filter(
-            user=request.user, following=following
-        )
+        subscription = request.user.followers.filter(following=following)
 
         if not subscription.exists():
             return Response(
