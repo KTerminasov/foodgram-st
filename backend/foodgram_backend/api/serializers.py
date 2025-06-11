@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
+from constants import RecipeConstants
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -149,6 +150,10 @@ class WriteRecipeIngredient(serializers.ModelSerializer):
     """
 
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    amount = serializers.IntegerField(
+        min_value=RecipeConstants.MIN_INGREDIENT_AMOUNT,
+        max_value=RecipeConstants.MAX_INGREDIENT_AMOUNT
+    )
 
     class Meta:
         model = RecipeIngredient
@@ -162,6 +167,10 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
     """Используется при POST- и PATCH- запросах при работе с рецептами."""
     ingredients = WriteRecipeIngredient(many=True)
     image = Base64ImageField()
+    cooking_time = serializers.IntegerField(
+        min_value=RecipeConstants.MIN_COOKING_TIME,
+        max_value=RecipeConstants.MAX_COOKING_TIME
+    )
 
     class Meta:
         model = Recipe

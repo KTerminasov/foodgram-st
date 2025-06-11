@@ -1,0 +1,8 @@
+class RecipeConstants:
+    """Класс постоянных значений для атрибутов рецепта."""
+
+    MIN_INGREDIENT_AMOUNT = 1
+    MAX_INGREDIENT_AMOUNT = 32000
+
+    MIN_COOKING_TIME = 1
+    MAX_COOKING_TIME = 32000
