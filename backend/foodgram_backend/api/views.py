@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import status, viewsets
@@ -243,7 +244,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def get_recipe_by_short_link(request, short_link):
     """Получение рецепта при помощи постоянной короткой ссылки."""
     recipe = get_object_or_404(Recipe, short_link=short_link)
-    url = request.build_absolute_uri(f'/recipes/{recipe.id}')
+    url = reverse('recipe_detail', args=[recipe.id])
 
     return HttpResponseRedirect(url)
 
