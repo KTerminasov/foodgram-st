@@ -143,9 +143,24 @@ class ReadRecipeSerializer(serializers.ModelSerializer):
         return False
 
 
+class WriteRecipeIngredient(serializers.ModelSerializer):
+    """Используется для создания списка ингредиентов в
+    CreateUpdateRecipeSerializer.
+    """
+
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+
+    class Meta:
+        model = RecipeIngredient
+        fields = (
+            'id',
+            'amount'
+        )
+
+
 class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
     """Используется при POST- и PATCH- запросах при работе с рецептами."""
-    ingredients = serializers.JSONField()
+    ingredients = WriteRecipeIngredient(many=True)
     image = Base64ImageField()
 
     class Meta:
@@ -161,46 +176,18 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
     def validate_ingredients(self, value):
         """Проверка корректности указания ингридиентов."""
         if not value:
-            raise serializers.ValidationError('Необходимо указать ингредиенты')
+            raise serializers.ValidationError(
+                'Необходимо указать ингредиенты.'
+            )
 
-        ingredients = []
-        ingredient_ids = set()
+        ingredients_ids = [ingredient['id'] for ingredient in value]
 
-        for item in value:
-            try:
-                if 'id' not in item or 'amount' not in item:
-                    raise serializers.ValidationError(
-                        'Неверный формат ингредиента. '
-                        'Требуются поля: id, amount'
-                    )
+        if len(ingredients_ids) != len(set(ingredients_ids)):
+            raise serializers.ValidationError(
+                'Ингредиенты в списке должны быть уникальны.'
+            )
 
-                if item['id'] in ingredient_ids:
-                    raise serializers.ValidationError(
-                        f'Ингредиент с id {item["id"]} '
-                        'указан более одного раза'
-                    )
-                ingredient_ids.add(item['id'])
-
-                ingredient = Ingredient.objects.get(id=item['id'])
-                if int(item['amount']) < 1:
-                    raise serializers.ValidationError(
-                        'Количество должно быть больше 0.'
-                    )
-                
-                ingredients.append({
-                    'ingredient': ingredient,
-                    'amount': item['amount']
-                })
-            except Ingredient.DoesNotExist:
-                raise serializers.ValidationError(
-                    'Ингредиент не найден.'
-                )
-            except KeyError:
-                raise serializers.ValidationError(
-                    'Неверный формат ингредиентов.'
-                )
-
-        return ingredients
+        return super().validate(value)
 
     def create(self, validated_data):
         """Создание рецепта с добавлением в него ингридиентов."""
@@ -213,7 +200,7 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
         RecipeIngredient.objects.bulk_create([
             RecipeIngredient(
                 recipe=recipe,
-                ingredient=ingredient['ingredient'],
+                ingredient=ingredient['id'],
                 amount=ingredient['amount']
             ) for ingredient in ingredients
         ])
@@ -240,7 +227,7 @@ class CreateUpdateRecipeSerializer(serializers.ModelSerializer):
         RecipeIngredient.objects.bulk_create([
             RecipeIngredient(
                 recipe=instance,
-                ingredient=ingredient['ingredient'],
+                ingredient=ingredient['id'],
                 amount=ingredient['amount']
             ) for ingredient in ingredients
         ])
