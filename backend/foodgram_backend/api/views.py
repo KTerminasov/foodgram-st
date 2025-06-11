@@ -74,13 +74,10 @@ class CustomUserViewSet(UserViewSet):
                 request.user, data=request.data, partial=True
             )
 
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+            serializer.is_valid(raise_exception=True)       
+            serializer.save()
 
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(serializer.data, status=status.HTTP_200_OK)         
 
         elif request.method == 'DELETE':
 
@@ -97,22 +94,20 @@ class CustomUserViewSet(UserViewSet):
         """Установка пароля."""
         serializer = SetPasswordSerializer(data=request.data)
 
-        if serializer.is_valid():
+        serializer.is_valid(raise_exception=True)
 
-            if not request.user.check_password(
-                serializer.validated_data['current_password']
-            ):
-                return Response(
-                    {'current_password': 'Неверный пароль'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        if not request.user.check_password(
+            serializer.validated_data['current_password']
+        ):
+            return Response(
+                {'current_password': 'Неверный пароль'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-            request.user.set_password(serializer.validated_data['new_password'])
-            request.user.save()
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
