@@ -1,7 +1,9 @@
 import hashlib
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+from constants import RecipeConstants
 
 
 User = get_user_model()
@@ -40,7 +42,10 @@ class Recipe(models.Model):
     image = models.ImageField(upload_to='recipes/images/')
     text = models.TextField()
     cooking_time = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1)]
+        validators=[
+            MinValueValidator(RecipeConstants.MIN_COOKING_TIME),
+            MaxValueValidator(RecipeConstants.MAX_COOKING_TIME)
+        ]
     )
     ingredients = models.ManyToManyField(
         Ingredient,
@@ -88,7 +93,10 @@ class RecipeIngredient(models.Model):
         related_name='recipe_ingredients'
     )
     amount = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1)]
+        validators=[
+            MinValueValidator(RecipeConstants.MIN_INGREDIENT_AMOUNT),
+            MaxValueValidator(RecipeConstants.MAX_INGREDIENT_AMOUNT)
+        ]
     )
 
     class Meta:

@@ -6,3 +6,5 @@ class RecipeConstants:
 
     MIN_COOKING_TIME = 1
     MAX_COOKING_TIME = 32000
+
+    
