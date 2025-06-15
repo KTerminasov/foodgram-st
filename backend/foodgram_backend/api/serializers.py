@@ -6,11 +6,9 @@ from rest_framework import serializers
 
 from constants import RecipeConstants
 from recipes.models import (
-    Favorite,
     Ingredient,
     Recipe,
     RecipeIngredient,
-    ShoppingCart,
 )
 from users.models import Subscription
 
